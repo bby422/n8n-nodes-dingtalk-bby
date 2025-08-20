@@ -1,75 +1,80 @@
-import { ITriggerFunctions, INodeType, INodeTypeDescription, ITriggerResponse } from 'n8n-workflow';
+import {
+	ITriggerFunctions,
+	INodeType,
+	INodeTypeDescription,
+	ITriggerResponse,
+	NodeConnectionType,
+} from 'n8n-workflow';
+import { DWClient, RobotMessage, TOPIC_CARD } from 'dingtalk-stream';
 
+interface DingTalkCardCredentials {
+	clientId: string;
+	clientSecret: string;
+}
 export class DingTalkCardStreamTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Ding Talk Card Stream Trigger',
+		displayName: 'DingTalkCardStreamTrigger',
 		name: 'dingTalkCardStreamTrigger',
 		icon: 'file:dingtalk.svg',
 		group: ['trigger'],
 		version: 1,
-		description: '钉钉卡片触发器',
+		description: '钉钉卡片流式触发节点',
 		defaults: {
-			name: 'Ding Talk Card Stream Trigger',
-			color: '#00FF00',
+			name: '钉钉卡片流式触发节点',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionType.Main],
 		properties: [
-			// Node properties which the user gets displayed and
-			// can change on the node.
 			{
-				displayName: 'Interval',
-				name: 'interval',
-				type: 'number',
-				typeOptions: {
-					minValue: 1,
-				},
-				default: 1,
-				description: 'Every how many minutes the workflow should be triggered.',
+				displayName: 'isAutoResponse',
+				name: 'isAutoResponse',
+				type: 'boolean',
+				default: true,
+				placeholder: '',
+				description: 'Whether to automatically respond (to avoid server-side retries)',
 			},
 		],
+		credentials: [
+			{
+				name: 'dingTalkCardApi',
+				required: true,
+			},
+		]
 	};
 
 	async trigger(this: ITriggerFunctions): Promise<ITriggerResponse> {
-		const interval = this.getNodeParameter('interval', 1) as number;
+		let client: DWClient | null = null;
+		const isAutoResponse = this.getNodeParameter('isAutoResponse') as boolean;
+		const credentials = (await this.getCredentials('dingTalkCardApi')) as DingTalkCardCredentials;
+		const { clientId, clientSecret } = credentials || {};
 
-		if (interval <= 0) {
-			throw new Error('The interval has to be set to at least 1 or higher!');
-		}
+		client = new DWClient({ clientId, clientSecret });
+		client
+			.registerCallbackListener(TOPIC_CARD, async (res) => {
+				const message = JSON.parse(res.data) as RobotMessage;
+				const messageId = res.headers.messageId;
+				const accessToken = await client?.getAccessToken();
 
-		const executeTrigger = () => {
-			// Every time the emit function gets called a new workflow
-			// executions gets started with the provided entries.
-			const entry = {
-				exampleKey: 'exampleData',
-			};
-			this.emit([this.helpers.returnJsonArray([entry])]);
-		};
-
-		// Sets an interval and triggers the workflow all n seconds
-		// (depends on what the user selected on the node)
-		const intervalValue = interval * 60 * 1000;
-		const intervalObj = setInterval(executeTrigger, intervalValue);
-
-		// The "closeFunction" function gets called by n8n whenever
-		// the workflow gets deactivated and can so clean up.
-		async function closeFunction() {
-			clearInterval(intervalObj);
-		}
-
-		// The "manualTriggerFunction" function gets called by n8n
-		// when a user is in the workflow editor and starts the
-		// workflow manually. So the function has to make sure that
-		// the emit() gets called with similar data like when it
-		// would trigger by itself so that the user knows what data
-		// to expect.
-		async function manualTriggerFunction() {
-			executeTrigger();
-		}
+				if (isAutoResponse) {
+					client?.socketCallBackResponse(messageId, {});
+				}
+				this.emit([
+					this.helpers.returnJsonArray([
+						{
+							accessToken,
+							messageId,
+							message,
+						},
+					]),
+				]);
+			})
+			.connect();
 
 		return {
-			closeFunction,
-			manualTriggerFunction,
+			closeFunction: async () => {
+				client?.disconnect();
+				client = null;
+			},
 		};
 	}
 }
