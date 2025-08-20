@@ -1,9 +1,9 @@
 import { ICredentialType, INodeProperties } from 'n8n-workflow';
 
-export class DingTalkCardApi implements ICredentialType {
-	name = 'dingTalkCardApi';
+export class DingTalkBbyApi implements ICredentialType {
+	name = 'dingTalkBbyApi';
 
-	displayName = 'DingTalk Card API';
+	displayName = 'DingTalk API';
 
 	documentationUrl = 'https://github.com/bby422/n8n-nodes-dingtalk-bby';
 

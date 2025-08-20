@@ -11,14 +11,14 @@ enum DingTalkType{
 	ROBOT = 'TOPIC_ROBOT',
 	CARD = 'TOPIC_CARD',
 }
-interface DingTalkCardCredentials {
+interface DingTalkCredentials {
 	clientId: string;
 	clientSecret: string;
 }
-export class DingTalkCardStreamTrigger implements INodeType {
+export class DingTalkStreamTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'DingTalkCardStreamTrigger',
-		name: 'dingTalkCardStreamTrigger',
+		displayName: 'DingTalkStreamTrigger',
+		name: 'dingTalkStreamTrigger',
 		icon: 'file:dingtalk.svg',
 		group: ['trigger'],
 		version: 1,
@@ -40,7 +40,7 @@ export class DingTalkCardStreamTrigger implements INodeType {
 		],
 		credentials: [
 			{
-				name: 'dingTalkCardApi',
+				name: 'dingTalkBbyApi',
 				required: true,
 			},
 		]
@@ -49,7 +49,7 @@ export class DingTalkCardStreamTrigger implements INodeType {
 	async trigger(this: ITriggerFunctions): Promise<ITriggerResponse | undefined> {
 		let client: DWClient | null = null;
 		const isAutoResponse = this.getNodeParameter('isAutoResponse') as boolean;
-		const credentials = (await this.getCredentials('dingTalkCardApi')) as DingTalkCardCredentials;
+		const credentials = (await this.getCredentials('dingTalkBbyApi')) as DingTalkCredentials;
 		const { clientId, clientSecret } = credentials || {};
 
 		client = new DWClient({ clientId, clientSecret });
