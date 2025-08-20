@@ -3,10 +3,14 @@ import {
 	INodeType,
 	INodeTypeDescription,
 	ITriggerResponse,
-	NodeConnectionType,
+	NodeConnectionType
 } from 'n8n-workflow';
-import { DWClient, RobotMessage, TOPIC_CARD } from 'dingtalk-stream';
+import { DWClient, RobotMessage, TOPIC_ROBOT, TOPIC_CARD } from 'dingtalk-stream';
 
+enum DingTalkType{
+	ROBOT = 'TOPIC_ROBOT',
+	CARD = 'TOPIC_CARD',
+}
 interface DingTalkCardCredentials {
 	clientId: string;
 	clientSecret: string;
@@ -18,9 +22,9 @@ export class DingTalkCardStreamTrigger implements INodeType {
 		icon: 'file:dingtalk.svg',
 		group: ['trigger'],
 		version: 1,
-		description: '钉钉卡片流式触发节点',
+		description: '钉钉流式触发节点',
 		defaults: {
-			name: '钉钉卡片流式触发节点',
+			name: '钉钉流式触发节点',
 		},
 		inputs: [],
 		outputs: [NodeConnectionType.Main],
@@ -42,13 +46,34 @@ export class DingTalkCardStreamTrigger implements INodeType {
 		]
 	};
 
-	async trigger(this: ITriggerFunctions): Promise<ITriggerResponse> {
+	async trigger(this: ITriggerFunctions): Promise<ITriggerResponse | undefined> {
 		let client: DWClient | null = null;
 		const isAutoResponse = this.getNodeParameter('isAutoResponse') as boolean;
 		const credentials = (await this.getCredentials('dingTalkCardApi')) as DingTalkCardCredentials;
 		const { clientId, clientSecret } = credentials || {};
 
 		client = new DWClient({ clientId, clientSecret });
+		client
+			.registerCallbackListener(TOPIC_ROBOT, async (res) => {
+				const message = JSON.parse(res.data) as RobotMessage;
+				const messageId = res.headers.messageId;
+				const accessToken = await client?.getAccessToken();
+
+				if (isAutoResponse) {
+					client?.socketCallBackResponse(messageId, {});
+				}
+				this.emit([
+					this.helpers.returnJsonArray([
+						{
+							accessToken,
+							msgType: DingTalkType.ROBOT,
+							messageId,
+							message,
+						},
+					]),
+				]);
+			})
+			.connect();
 		client
 			.registerCallbackListener(TOPIC_CARD, async (res) => {
 				const message = JSON.parse(res.data) as RobotMessage;
@@ -62,6 +87,7 @@ export class DingTalkCardStreamTrigger implements INodeType {
 					this.helpers.returnJsonArray([
 						{
 							accessToken,
+							msgType: DingTalkType.CARD,
 							messageId,
 							message,
 						},
