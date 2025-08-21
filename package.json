@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-dingtalk-bby",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "description": "dingtalk nodes for n8n, 钉钉机器人节点, 钉钉机器人卡片节点",
   "keywords": [
     "n8n-community-node-package"
