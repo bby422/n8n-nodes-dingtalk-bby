@@ -66,6 +66,7 @@ export class DingTalkStreamTrigger implements INodeType {
 					this.helpers.returnJsonArray([
 						{
 							accessToken,
+							abc: 'baby!',
 							msgType: DingTalkType.ROBOT,
 							messageId,
 							message,
@@ -87,9 +88,10 @@ export class DingTalkStreamTrigger implements INodeType {
 					this.helpers.returnJsonArray([
 						{
 							accessToken,
+							abc: 'heyman!',
 							msgType: DingTalkType.CARD,
 							messageId,
-							message,
+							message
 						},
 					]),
 				]);
