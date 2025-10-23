@@ -57,7 +57,7 @@ export class DingTalkStreamTrigger implements INodeType {
 			.registerCallbackListener(TOPIC_ROBOT, async (res) => {
 				const message = JSON.parse(res.data) as RobotMessage;
 				const messageId = res.headers.messageId;
-				const accessToken = await client?.getAccessToken();
+				// const accessToken = await client?.getAccessToken();
 
 				if (isAutoResponse) {
 					client?.socketCallBackResponse(messageId, {});
@@ -65,7 +65,7 @@ export class DingTalkStreamTrigger implements INodeType {
 				this.emit([
 					this.helpers.returnJsonArray([
 						{
-							accessToken,
+							// accessToken,
 							abc: 'baby!',
 							msgType: DingTalkType.ROBOT,
 							messageId,
@@ -79,7 +79,7 @@ export class DingTalkStreamTrigger implements INodeType {
 			.registerCallbackListener(TOPIC_CARD, async (res) => {
 				const message = JSON.parse(res.data) as RobotMessage;
 				const messageId = res.headers.messageId;
-				const accessToken = await client?.getAccessToken();
+				// const accessToken = await client?.getAccessToken();
 
 				if (isAutoResponse) {
 					client?.socketCallBackResponse(messageId, {});
@@ -87,7 +87,7 @@ export class DingTalkStreamTrigger implements INodeType {
 				this.emit([
 					this.helpers.returnJsonArray([
 						{
-							accessToken,
+							// accessToken,
 							abc: 'heyman!',
 							msgType: DingTalkType.CARD,
 							messageId,
